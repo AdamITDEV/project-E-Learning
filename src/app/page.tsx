@@ -2,13 +2,6 @@
 import Image from "next/image";
 import { useState } from "react";
 import ArcheryGame from "./components/ArcheryGame";
-const categories = [
-  { name: "Gấu trúc", icon: "🐼" },
-  { name: "Gấu trắng", icon: "🐻‍❄️" },
-  { name: "Panda mini", icon: "🧸" },
-  { name: "Gấu xám", icon: "🐾" },
-  { name: "Gấu hoạt hình", icon: "🌿" },
-];
 
 export default function Home() {
   const [isOpen, setIsOpen] = useState(false);
@@ -132,32 +125,18 @@ export default function Home() {
         <main className="flex-1 p-8">
           {selectedContent === "home" && (
             <>
-              <div className="text-center mb-10">
+              <div className="text-center mb-10 ">
                 <Image
-                  src="/panda.jpg"
+                  src="/images/panda.jpg"
                   alt="Cute Panda"
-                  width={240}
-                  height={240}
-                  className="mx-auto"
+                  width={1920}
+                  height={1080}
+                  className="mx-auto w-[1200px] h-[500px] rounded-sm shadow-lg"
                 />
-                <h2 className="text-3xl font-bold mt-4">
-                  Chào mừng đến với Homepane!
-                </h2>
+
                 <p className="text-gray-600 mt-2">
                   Thế giới gấu trúc dễ thương đang chờ bạn!
                 </p>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {categories.map((cat, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-white p-4 rounded-xl shadow text-center hover:scale-105 transition"
-                  >
-                    <div className="text-4xl">{cat.icon}</div>
-                    <p className="mt-2">{cat.name}</p>
-                  </div>
-                ))}
               </div>
             </>
           )}
