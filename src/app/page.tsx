@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ArcheryGame from "./components/ArcheryGame";
 
 export default function Home() {
@@ -16,7 +16,19 @@ export default function Home() {
   const handleOpen = () => {
     setIsOpen(!isOpen);
   };
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+      }
+    };
 
+    window.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
   return (
     <div className="min-h-screen flex flex-col bg-blue-50 text-gray-800">
       {/* Top Navbar */}
@@ -125,18 +137,14 @@ export default function Home() {
         <main className="flex-1 p-8">
           {selectedContent === "home" && (
             <>
-              <div className="text-center mb-10 ">
+              <div className="text-center  ">
                 <Image
                   src="/images/panda.jpg"
                   alt="Cute Panda"
                   width={1920}
                   height={1080}
-                  className="mx-auto w-[1200px] h-[500px] rounded-sm shadow-lg"
+                  className="mx-auto w-[1200px] h-[600px] rounded-sm shadow-lg"
                 />
-
-                <p className="text-gray-600 mt-2">
-                  Thế giới gấu trúc dễ thương đang chờ bạn!
-                </p>
               </div>
             </>
           )}
