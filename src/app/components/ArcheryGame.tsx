@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import clsx from "clsx";
 import { motion } from "framer-motion";
@@ -34,39 +34,98 @@ export default function ArcheryGame() {
   const [lives, setLives] = useState(3);
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
+  const [showQuestion, setShowQuestion] = useState(false);
+  const [zoomIn, setZoomIn] = useState(false);
+  const [showAttack, setShowAttack] = useState(false);
+  const [showSmoke, setShowSmoke] = useState(false);
+  const [showCompleteAttack, setShowCompleteAttack] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setWukongEntered(true);
+      setShowQuestion(true);
+      setZoomIn(true);
+      setShowSmoke(true); // Show smoke every time a new question appears
+      setTimeout(() => setShowSmoke(false), 1000); // Hide smoke after 1 second
+    }, 5000); // Delay before showing the question
+
+    return () => clearTimeout(timer);
+  }, [currentQuestionIndex]); // Trigger on question change
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setWukongEntered(true);
+      setShowQuestion(true);
+      setZoomIn(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [currentQuestionIndex]);
+
+  useEffect(() => {
+    if (result) return;
+
+    const timer = setTimeout(() => {
+      setWukongEntered(true);
+      setShowQuestion(true);
+      setZoomIn(true);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [currentQuestionIndex, result]);
+
+  const [wukongEntered, setWukongEntered] = useState(false);
+  const [bossVisible, setBossVisible] = useState(true);
+
+  const currentQuestion = !gameOver ? questions[currentQuestionIndex] : null;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setWukongEntered(true);
+      setShowQuestion(true);
+      setZoomIn(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [currentQuestionIndex]);
 
   const handleAnswer = (index: number) => {
-    if (gameOver) return; // Nếu đã game over thì không làm gì nữa
+    if (gameOver || result) return;
     setSelected(index);
+    const isCorrect = index === currentQuestion!.correct;
+    setResult(isCorrect ? "correct" : "wrong");
+    setShowQuestion(false);
 
-    const isCorrect = index === questions[currentQuestionIndex].correct;
+    setTimeout(() => {
+      setShowAttack(true);
 
-    if (isCorrect) {
-      setResult("correct");
+      // Chỉ hiện complete_attack nếu đúng
+      if (isCorrect) {
+        setShowCompleteAttack(true);
+
+        setTimeout(() => {
+          setShowCompleteAttack(false);
+        }, 1000); // Ẩn sau 1s
+      }
+
       setTimeout(() => {
         if (currentQuestionIndex < questions.length - 1) {
           setCurrentQuestionIndex((prev) => prev + 1);
           resetQuestion();
+          setBossVisible(true);
         } else {
           setWon(true);
           setGameOver(true);
         }
-      }, 1500);
-    } else {
-      setResult("wrong");
-      setLives((prev) => {
-        const newLives = prev - 1;
-        if (newLives <= 0) {
-          setTimeout(() => setGameOver(true), 1000);
-        }
-        return newLives;
-      });
-    }
+      }, 2700);
+    }, 800);
   };
 
   const resetQuestion = () => {
     setSelected(null);
     setResult(null);
+    setShowQuestion(false);
+    setZoomIn(false);
+    setShowAttack(false);
+    setWukongEntered(false);
   };
 
   const restartGame = () => {
@@ -76,53 +135,237 @@ export default function ArcheryGame() {
     setLives(3);
     setGameOver(false);
     setWon(false);
+    setShowQuestion(false);
+    setWukongEntered(false);
+    setBossVisible(true);
   };
 
-  const currentQuestion = !gameOver ? questions[currentQuestionIndex] : null;
-
   return (
-    <div className="relative w-full h-[550px] bg-gradient-to-b from-blue-100 to-blue-300 rounded-xl p-6 overflow-hidden">
-      {/* Target */}
-      <div
-        className="absolute right-40 top-1/2 transform -translate-y-1/2"
-        style={{ width: "200px", height: "200px" }}
-      >
-        <Image
-          src="/images/target.webp"
-          alt="target"
-          fill
-          className="object-contain"
-        />
-      </div>
+    <div
+      className="relative w-full h-[550px] bg-cover bg-center rounded-xl p-6 overflow-hidden"
+      style={{ backgroundImage: "url('/images/background.jpg')" }}
+    >
+      {/* Boss */}
 
-      {/* Bow */}
-      <div className="absolute left-10 top-55 w-[100px] h-[100px]">
-        <Image
-          src="/images/bow.webp"
-          alt="bow"
-          fill
-          className="object-contain"
-        />
-      </div>
+      {showSmoke && bossVisible && (
+        <div className="absolute right-20 top-1/2 transform -translate-y-1/2 w-[450px] h-[450px] pointer-events-none">
+          <Image
+            src="/images/smoke.gif"
+            alt="Smoke Effect"
+            fill
+            className="object-contain"
+          />
+        </div>
+      )}
 
-      {/* Arrow */}
-      {result && (
+      {/* Wukong flying in */}
+      {!wukongEntered && !result && (
         <motion.div
-          key={selected}
-          initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
-          animate={
-            result === "correct"
-              ? { x: 710, y: -5, rotate: -5, opacity: 1 }
-              : { x: 800, y: -200, rotate: 45, opacity: 0 }
-          }
-          transition={{ duration: 1.2, ease: "easeOut" }}
-          className="absolute left-[110px] top-[220px]"
+          animate={{ x: wukongEntered ? 100 : 400, y: 10, opacity: 1 }}
+          initial={{ x: -200, y: -100, opacity: 0 }}
+          transition={{ duration: 5, ease: "easeInOut" }}
+          className="absolute w-[350px] h-[350px] top-32"
         >
           <Image
-            src="/images/arrow.webp"
-            alt="arrow"
-            width={128}
-            height={32}
+            src="/images/shifu.png"
+            alt="Shifu"
+            fill
+            className="object-contain transform scale-x-[-1] ml-[-100px] mt-[-120px] " // Flips the image vertically
+          />
+          <Image
+            src="/images/sky.png"
+            alt="Shifu"
+            fill
+            className="object-contain transform scale-x-[-1] ml-[-100px] mb-[-120px] " // Flips the image vertically
+          />
+          <Image
+            src="/images/WukongPanda.png"
+            alt="Wukong Panda"
+            fill
+            className="object-contain"
+          />
+        </motion.div>
+      )}
+      {/* Boss */}
+      {bossVisible && (!wukongEntered || result === "wrong") && (
+        <motion.div
+          initial={{
+            x: result === "wrong" ? -600 : 0, // Bắt đầu từ bên trái
+            y: 0,
+          }}
+          animate={{
+            x: result === "wrong" ? [-600, -400, -200, 0, 200, 400] : 0, // Di chuyển sang phải
+            y: result === "wrong" ? [0, -50, 50, -50, 50, 0] : 0, // Zigzag: lên xuống khi di chuyển
+          }}
+          transition={{
+            duration: 3, // Kéo dài hơn để thấy rõ zigzag
+            ease: "easeInOut",
+          }}
+          className="absolute right-20 top-1/2 transform -translate-y-1/2 w-[420px] h-[420px]"
+        >
+          {/* Boss image */}
+          <Image
+            src="/images/boss.png"
+            alt="boss"
+            fill
+            className="object-contain z-50"
+          />
+
+          {/* Sky always */}
+          <div className="absolute right-[-50px] top-[320px] transform -translate-y-1/2 w-[450px] h-[450px] z-10">
+            <Image
+              src="/images/sky.png"
+              alt="Sky"
+              fill
+              className="object-contain"
+            />
+          </div>
+
+          {/* Shifu + Sky chỉ khi wrong */}
+          {result === "wrong" && (
+            <>
+              <Image
+                src="/images/shifu.png"
+                alt="Shifu"
+                fill
+                className="object-contain transform scale-x-[-1] ml-[-100px] mt-[-120px]"
+              />
+              <Image
+                src="/images/sky.png"
+                alt="Shifu"
+                fill
+                className="object-contain transform scale-x-[-1] ml-[-100px] mb-[-120px]"
+              />
+            </>
+          )}
+        </motion.div>
+      )}
+
+      {/* Shifu */}
+      {result === "wrong" && !wukongEntered && (
+        <motion.div
+          animate={{
+            x: 500, // Di chuyển sang phải khi sai
+            y: 10,
+            opacity: 1,
+          }}
+          initial={{ x: -200, y: -100, opacity: 0 }}
+          transition={{ duration: 5, ease: "easeInOut" }}
+          className="absolute w-[350px] h-[350px] top-32"
+        >
+          <Image
+            src="/images/shifu.png"
+            alt="Shifu"
+            fill
+            className="object-contain transform scale-x-[-1] ml-[-100px] mt-[-120px]" // Flips the image vertically
+          />
+          <Image
+            src="/images/sky.png"
+            alt="Shifu"
+            fill
+            className="object-contain transform scale-x-[-1] ml-[-100px] mb-[-120px]" // Flips the image vertically
+          />
+          <Image
+            src="/images/WukongPanda.png"
+            alt="Wukong Panda"
+            fill
+            className="object-contain"
+          />
+        </motion.div>
+      )}
+
+      {/* Attack arrow */}
+      {result === "correct" && (
+        <>
+          {/* Attack animation */}
+          <motion.div
+            key={`attack-${selected}`}
+            initial={{ x: 200, y: 100, opacity: 1 }}
+            animate={{ x: 600, y: 100, rotate: 360, opacity: 1 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="absolute w-[300px] h-[300px] left-0 top-0 z-30"
+          >
+            <Image
+              src="/images/attack.png"
+              alt="Attack"
+              fill
+              className="object-contain"
+            />
+          </motion.div>
+
+          {/* Boss image */}
+          <motion.div
+            initial={{ opacity: 1 }}
+            animate={{
+              opacity: result === "correct" ? 0 : 1,
+              scale: result === "correct" ? 0.5 : 1,
+              y: result === "correct" ? 100 : 0,
+            }}
+            transition={{ delay: 1.5, duration: 1 }}
+            className="absolute w-[400px] h-[400px] left-[600px] top-[100px] z-10"
+          >
+            <Image
+              src="/images/boss.png"
+              alt="Boss"
+              fill
+              className="object-contain"
+            />
+            <div className="absolute right-[-50px] top-[320px] transform -translate-y-1/2 w-[450px] h-[450px] z-10">
+              <Image
+                src="/images/sky.png"
+                alt="Sky"
+                fill
+                className="object-contain"
+              />
+            </div>
+          </motion.div>
+
+          {/* Wukong image */}
+          <motion.div
+            initial={{ opacity: 1 }}
+            animate={{ x: 700, y: 0, rotate: 10, opacity: 1 }}
+            transition={{ delay: 2.1, duration: 1.0 }}
+            className="absolute w-[350px] h-[350px] left-[100px] top-[100px] z-20"
+          >
+            <Image
+              src="/images/WukongPanda.png"
+              alt="Wukong"
+              fill
+              className="object-contain"
+            />
+          </motion.div>
+        </>
+      )}
+
+      {showCompleteAttack && (
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1.2, opacity: 1 }}
+          exit={{ scale: 0.5, opacity: 0 }}
+          transition={{ duration: 0.6 }} // giữ animation ngắn để Wukong bay sau
+          className="absolute w-[500px] h-[500px] top-[100px] left-[500px] z-50 pointer-events-none"
+        >
+          <Image
+            src="/images/complete_attack.png"
+            alt="Complete Attack"
+            fill
+            className="object-contain"
+          />
+        </motion.div>
+      )}
+
+      {result === "wrong" && (
+        <motion.div
+          key={`miss-${selected}`}
+          initial={{ x: 200, y: 100, opacity: 1 }}
+          animate={{ x: 600, y: 300, rotate: 100, opacity: 0.5 }}
+          transition={{ duration: 1.2, ease: "easeInOut" }}
+          className="absolute w-[400px] h-[400px] left-0 top-0 z-30"
+        >
+          <Image
+            src="/images/attack.png"
+            alt="Miss"
+            fill
             className="object-contain"
           />
         </motion.div>
@@ -133,38 +376,61 @@ export default function ArcheryGame() {
         ❤️ {lives}
       </div>
 
-      {/* Question Box */}
-      {currentQuestion && !gameOver && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white rounded-xl shadow-lg p-4 w-[90%] max-w-md">
-          <h2 className="text-lg font-bold mb-4">{currentQuestion.text}</h2>
-          <div className="grid grid-cols-2 gap-4">
-            {currentQuestion.options.map((opt, idx) => (
-              <button
-                key={idx}
-                disabled={result === "correct"}
-                onClick={() => handleAnswer(idx)}
-                className={clsx(
-                  "py-2 px-3 rounded bg-blue-100 hover:bg-blue-200 transition",
-                  {
-                    "bg-green-300":
-                      selected === idx &&
-                      result === "correct" &&
-                      idx === currentQuestion.correct,
-                    "bg-red-300":
-                      selected === idx &&
-                      result === "wrong" &&
-                      idx === selected,
-                  }
-                )}
-              >
-                {opt}
-              </button>
-            ))}
+      {/* Question box */}
+      {showQuestion && currentQuestion && !gameOver && (
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={zoomIn ? { scale: 1, opacity: 1 } : {}}
+          transition={{ duration: 0.6 }}
+          className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white rounded-xl shadow-lg p-6 w-[90%] h-[90%] max-w-4xl flex flex-col justify-start items-center"
+        >
+          <h2 className="text-2xl font-extrabold text-green-700 mb-6 text-center">
+            Câu hỏi
+          </h2>
+          <p className="text-lg font-semibold mb-8 text-center">
+            {currentQuestion.text}
+          </p>
+          <div className="grid grid-cols-2 gap-6 w-full max-w-2xl">
+            {currentQuestion.options.map((opt, idx) => {
+              const optionLetter = String.fromCharCode(97 + idx); // 'a', 'b', ...
+              const isCorrect = selected === idx && result === "correct";
+              const isWrong = selected === idx && result === "wrong";
+
+              const baseColors = [
+                "bg-blue-200",
+                "bg-pink-200",
+                "bg-green-200",
+                "bg-orange-200",
+              ];
+
+              return (
+                <button
+                  key={idx}
+                  disabled={result !== null}
+                  onClick={() => handleAnswer(idx)}
+                  className={clsx(
+                    "flex items-center gap-3 px-6 py-3 rounded-full text-left shadow-md transition duration-300",
+                    baseColors[idx],
+                    {
+                      "bg-green-400": isCorrect,
+                      "bg-red-300": isWrong,
+                      "opacity-60": result !== null && selected !== idx,
+                      "cursor-not-allowed": result !== null,
+                    }
+                  )}
+                >
+                  <span className="w-8 h-8 rounded-full bg-white text-center font-bold text-md flex items-center justify-center border border-gray-400">
+                    {optionLetter}
+                  </span>
+                  <span className="font-medium">{opt}</span>
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </motion.div>
       )}
 
-      {/* Game Over / Win Box */}
+      {/* Game Over / Win */}
       {gameOver && (
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white rounded-xl shadow-lg p-6 w-[90%] max-w-md text-center">
           <h2 className="text-xl font-bold mb-4">
