@@ -36,7 +36,7 @@ export default function ArcheryGame() {
   const [won, setWon] = useState(false);
   const [showQuestion, setShowQuestion] = useState(false);
   const [zoomIn, setZoomIn] = useState(false);
-  const [showAttack, setShowAttack] = useState(false);
+
   const [showSmoke, setShowSmoke] = useState(false);
   const [showCompleteAttack, setShowCompleteAttack] = useState(false);
 
@@ -95,8 +95,6 @@ export default function ArcheryGame() {
     setShowQuestion(false);
 
     setTimeout(() => {
-      setShowAttack(true);
-
       // Chỉ hiện complete_attack nếu đúng
       if (isCorrect) {
         setShowCompleteAttack(true);
@@ -124,7 +122,7 @@ export default function ArcheryGame() {
     setResult(null);
     setShowQuestion(false);
     setZoomIn(false);
-    setShowAttack(false);
+
     setWukongEntered(false);
   };
 
@@ -192,14 +190,15 @@ export default function ArcheryGame() {
           initial={{
             x: result === "wrong" ? -600 : 0, // Bắt đầu từ bên trái
             y: 0,
+            opacity: 1,
           }}
           animate={{
-            x: result === "wrong" ? [-600, -400, -200, 0, 200, 400] : 0, // Di chuyển sang phải
-            y: result === "wrong" ? [0, -50, 50, -50, 50, 0] : 0, // Zigzag: lên xuống khi di chuyển
+            x: result === "wrong" ? 400 : 0, // Di chuyển thẳng qua phải
+            opacity: result === "wrong" ? 0 : 1, // Mờ dần khi di chuyển xong
           }}
           transition={{
-            duration: 3, // Kéo dài hơn để thấy rõ zigzag
-            ease: "easeInOut",
+            x: { duration: 2, ease: "easeInOut" }, // Di chuyển mượt trong 2 giây
+            opacity: { duration: 1, ease: "easeInOut", delay: 2 }, // Mờ dần sau khi di chuyển xong
           }}
           className="absolute right-20 top-1/2 transform -translate-y-1/2 w-[420px] h-[420px]"
         >
