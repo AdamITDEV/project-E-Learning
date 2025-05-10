@@ -6,24 +6,32 @@ import { motion } from "framer-motion";
 
 const questions = [
   {
-    text: "Gấu trúc thường ăn gì?",
-    options: ["Thịt", "Tre", "Táo", "Cá"],
-    correct: 1,
-  },
-  {
-    text: "Mặt trời mọc hướng nào?",
-    options: ["Bắc", "Nam", "Đông", "Tây"],
+    text: "1. Trong các nguyên âm dưới đây nguyên âm nào là nguyên âm đơn?",
+    options: ["i", "u", "ai", "e"],
     correct: 2,
   },
   {
-    text: "Con vật nào biết bay?",
-    options: ["Cá mập", "Chim sẻ", "Sư tử", "Cá voi"],
-    correct: 1,
+    text: "2. Âm nào là nguyên âm?",
+    options: ["b", "m", "u", "p"],
+    correct: 2,
   },
   {
-    text: "Mùa nào thường lạnh nhất?",
-    options: ["Xuân", "Hạ", "Thu", "Đông"],
+    text: "3. Nhìn hình chọn đáp án đúng:",
+    options: ["mà", "bà", "pà", "fà"],
     correct: 3,
+    image: "/images/hinhanhcau3bai1.jpg",
+  },
+  {
+    text: "4. Trong 4 âm / d / t / n / l / âm nào phát âm bật hơi ?",
+    options: ["n", "t", "l", "d"],
+    correct: 1,
+    audio: "audio/bai1cauhoi4.mp3",
+  },
+  {
+    text: "5. Nhìn hình chọn đáp án đúng :",
+    options: ["bà", "bá", "mà", "là"],
+    correct: 1,
+    image: "/images/hinhanhcau5bai1.jpg",
   },
 ];
 
@@ -36,9 +44,65 @@ export default function ArcheryGame() {
   const [won, setWon] = useState(false);
   const [showQuestion, setShowQuestion] = useState(false);
   const [zoomIn, setZoomIn] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(
+    null
+  );
+  const handlePlayAudio = () => {
+    if (!currentQuestion?.audio) return;
 
+    // Dừng audio hiện tại nếu có
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }
+
+    // Tạo audio mới
+    const audio = new Audio(currentQuestion.audio);
+    setCurrentAudio(audio);
+
+    audio
+      .play()
+      .then(() => setIsPlaying(true))
+      .catch((error) => console.error("Error playing audio:", error));
+
+    audio.onended = () => {
+      setIsPlaying(false);
+    };
+  };
+
+  const handlePauseAudio = () => {
+    if (currentAudio) {
+      currentAudio.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  const handleReplayAudio = () => {
+    if (currentAudio) {
+      currentAudio.currentTime = 0;
+      currentAudio
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch((error) => console.error("Error replaying audio:", error));
+    } else {
+      handlePlayAudio();
+    }
+  };
   const [showSmoke, setShowSmoke] = useState(false);
   const [showCompleteAttack, setShowCompleteAttack] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setWukongEntered(true);
+      setShowQuestion(true);
+      setZoomIn(true);
+      setShowSmoke(true); // this one adds smoke
+      setTimeout(() => setShowSmoke(false), 1000);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [currentQuestionIndex]);
+
+  // Three more almost identical effects...
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -137,7 +201,25 @@ export default function ArcheryGame() {
     setWukongEntered(false);
     setBossVisible(true);
   };
+  useEffect(() => {
+    return () => {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        setIsPlaying(false);
+      }
+    };
+  }, [currentAudio]);
 
+  useEffect(() => {
+    // Reset audio state khi chuyển câu hỏi
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      setCurrentAudio(null);
+    }
+    setIsPlaying(false);
+  }, [currentQuestionIndex]);
   return (
     <div
       className="relative w-full h-[550px] bg-cover bg-center rounded-xl p-6 overflow-hidden"
@@ -389,6 +471,88 @@ export default function ArcheryGame() {
           <p className="text-lg font-semibold mb-8 text-center">
             {currentQuestion.text}
           </p>
+          {currentQuestion.image && (
+            <div className="mb-6 w-40 h-40 flex justify-center">
+              <Image
+                src={currentQuestion.image}
+                alt="Câu hỏi minh họa"
+                width={300}
+                height={200}
+                className="rounded-lg object-contain"
+              />
+            </div>
+          )}
+
+          {currentQuestion.audio && (
+            <div className="mb-6 flex items-center justify-center gap-4">
+              {!isPlaying ? (
+                <button
+                  onClick={handlePlayAudio}
+                  className="p-3 bg-blue-500 rounded-full text-white hover:bg-blue-600 transition"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                </button>
+              ) : (
+                <button
+                  onClick={handlePauseAudio}
+                  className="p-3 bg-blue-500 rounded-full text-white hover:bg-blue-600 transition"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                  </svg>
+                </button>
+              )}
+
+              <button
+                onClick={handleReplayAudio}
+                className="p-3 bg-blue-500 rounded-full text-white hover:bg-blue-600 transition"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+              </button>
+
+              {/* <span className="text-sm text-gray-600">
+                {currentQuestion.audio.replace("audio/", "")}
+              </span> */}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-6 w-full max-w-2xl">
             {currentQuestion.options.map((opt, idx) => {
               const optionLetter = String.fromCharCode(97 + idx); // 'a', 'b', ...
