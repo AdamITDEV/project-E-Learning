@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import clsx from "clsx";
 import { motion } from "framer-motion";
@@ -151,36 +151,6 @@ export default function ArcheryGame() {
     return () => clearTimeout(timer);
   }, [currentQuestionIndex]);
 
-  const handleAnswer = (index: number) => {
-    if (gameOver || result) return;
-    setSelected(index);
-    const isCorrect = index === currentQuestion!.correct;
-    setResult(isCorrect ? "correct" : "wrong");
-    setShowQuestion(false);
-
-    setTimeout(() => {
-      // Chỉ hiện complete_attack nếu đúng
-      if (isCorrect) {
-        setShowCompleteAttack(true);
-
-        setTimeout(() => {
-          setShowCompleteAttack(false);
-        }, 1000); // Ẩn sau 1s
-      }
-
-      setTimeout(() => {
-        if (currentQuestionIndex < questions.length - 1) {
-          setCurrentQuestionIndex((prev) => prev + 1);
-          resetQuestion();
-          setBossVisible(true);
-        } else {
-          setWon(true);
-          setGameOver(true);
-        }
-      }, 2700);
-    }, 800);
-  };
-
   const resetQuestion = () => {
     setSelected(null);
     setResult(null);
@@ -220,6 +190,83 @@ export default function ArcheryGame() {
     }
     setIsPlaying(false);
   }, [currentQuestionIndex]);
+
+  const correctSoundRef = useRef<HTMLAudioElement | null>(null);
+  const wrongSoundRef = useRef<HTMLAudioElement | null>(null);
+  const attackSoundRef = useRef<HTMLAudioElement | null>(null);
+  const smileSoundRef = useRef<HTMLAudioElement | null>(null);
+
+  // Khởi tạo audio khi component mount
+  useEffect(() => {
+    correctSoundRef.current = new Audio("/audio/correct.mp3");
+    wrongSoundRef.current = new Audio("/audio/wrong.mp3");
+    attackSoundRef.current = new Audio("/audio/attack.mp3");
+    smileSoundRef.current = new Audio("/audio/smile.mp3");
+
+    // Dọn dẹp khi unmount
+    return () => {
+      [correctSoundRef, wrongSoundRef, attackSoundRef, smileSoundRef].forEach(
+        (ref) => {
+          if (ref.current) {
+            ref.current.pause();
+            ref.current = null;
+          }
+        }
+      );
+    };
+  }, []);
+
+  const handleAnswer = (index: number) => {
+    if (gameOver || result) return;
+    setSelected(index);
+    const isCorrect = index === currentQuestion!.correct;
+    setResult(isCorrect ? "correct" : "wrong");
+    setShowQuestion(false);
+
+    // Phát âm thanh tương ứng
+    if (isCorrect) {
+      correctSoundRef.current
+        ?.play()
+        .catch((e) => console.error("Error playing correct sound:", e));
+
+      // Thêm delay để âm thanh attack phát cùng lúc với hiệu ứng
+      setTimeout(() => {
+        attackSoundRef.current
+          ?.play()
+          .catch((e) => console.error("Error playing attack sound:", e));
+      }, 500); // Delay 0.5s để đồng bộ với animation
+    } else {
+      wrongSoundRef.current
+        ?.play()
+        .catch((e) => console.error("Error playing wrong sound:", e));
+      smileSoundRef.current
+        ?.play()
+        .catch((e) => console.error("Error playing smile sound:", e));
+      setLives((prev) => prev - 1);
+    }
+
+    setTimeout(() => {
+      // Chỉ hiện complete_attack nếu đúng
+      if (isCorrect) {
+        setShowCompleteAttack(true);
+        setTimeout(() => {
+          setShowCompleteAttack(false);
+        }, 1000);
+      }
+
+      setTimeout(() => {
+        if (currentQuestionIndex < questions.length - 1) {
+          setCurrentQuestionIndex((prev) => prev + 1);
+          resetQuestion();
+          setBossVisible(true);
+        } else {
+          setWon(true);
+          setGameOver(true);
+        }
+      }, 2700);
+    }, 800);
+  };
+
   return (
     <div
       className="relative w-full h-[550px] bg-cover bg-center rounded-xl p-6 overflow-hidden"
