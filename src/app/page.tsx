@@ -139,7 +139,7 @@ export default function Home() {
             <>
               <div className="text-center  ">
                 <Image
-                  src="/images/panda.jpg"
+                  src="/images/bg_cutepanda.jpg"
                   alt="Cute Panda"
                   width={1920}
                   height={1080}
