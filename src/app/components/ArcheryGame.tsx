@@ -85,6 +85,12 @@ export default function ArcheryGame() {
       currentAudio.currentTime = 0;
     }
 
+    // Dừng nhạc nền
+    if (backgroundSoundRef.current && isBackgroundPlaying) {
+      backgroundSoundRef.current.pause();
+      setIsBackgroundPlaying(false);
+    }
+
     // Tạo audio mới
     const audio = new Audio(currentQuestion.audio);
     setCurrentAudio(audio);
@@ -96,6 +102,13 @@ export default function ArcheryGame() {
 
     audio.onended = () => {
       setIsPlaying(false);
+      // Bật lại nhạc nền khi audio kết thúc
+      if (backgroundSoundRef.current && !isBackgroundPlaying) {
+        backgroundSoundRef.current
+          .play()
+          .then(() => setIsBackgroundPlaying(true))
+          .catch((e) => console.error("Lỗi phát nhạc nền:", e));
+      }
     };
   };
 
@@ -103,6 +116,13 @@ export default function ArcheryGame() {
     if (currentAudio) {
       currentAudio.pause();
       setIsPlaying(false);
+      // Bật lại nhạc nền khi tạm dừng audio câu hỏi
+      if (backgroundSoundRef.current && !isBackgroundPlaying) {
+        backgroundSoundRef.current
+          .play()
+          .then(() => setIsBackgroundPlaying(true))
+          .catch((e) => console.error("Lỗi phát nhạc nền:", e));
+      }
     }
   };
 
@@ -588,7 +608,7 @@ export default function ArcheryGame() {
             }
             setIsBackgroundPlaying(!isBackgroundPlaying);
           }}
-          className="p-2 bg-white rounded-full shadow-md"
+          className="p-2 bg-white rounded-full shadow-md z-50"
         >
           {isBackgroundPlaying ? (
             <svg
