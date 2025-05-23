@@ -138,7 +138,7 @@ export default function ArcheryGame() {
             setTimeout(() => {
               setShowQuestion(true);
               setZoomIn(true);
-            }, 500);
+            }, 2000);
           }, 1000);
         }, 500);
       }, 800);
