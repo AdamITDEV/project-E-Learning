@@ -45,6 +45,34 @@ export default function ArcheryGame() {
   const [showQuestion, setShowQuestion] = useState(false);
   const [zoomIn, setZoomIn] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showVS, setShowVS] = useState(false);
+  const backgroundSoundRef = useRef<HTMLAudioElement | null>(null);
+  const [isBackgroundPlaying, setIsBackgroundPlaying] = useState(false);
+
+  // Thêm useEffect để khởi tạo và phát nhạc nền
+  useEffect(() => {
+    // Khởi tạo audio
+    backgroundSoundRef.current = new Audio("/audio/tayduky.mp3");
+    backgroundSoundRef.current.loop = true; // Lặp lại nhạc nền
+
+    // Tự động phát nhạc (cần xử lý trình duyệt chặn autoplay)
+    const handlePlay = () => {
+      backgroundSoundRef.current
+        ?.play()
+        .then(() => setIsBackgroundPlaying(true))
+        .catch((e) => console.error("Lỗi phát nhạc nền:", e));
+    };
+
+    // Thêm sự kiện click để kích hoạt audio (vì nhiều trình duyệt chặn autoplay)
+    document.addEventListener("click", handlePlay, { once: true });
+
+    // Dọn dẹp
+    return () => {
+      backgroundSoundRef.current?.pause();
+      backgroundSoundRef.current = null;
+      document.removeEventListener("click", handlePlay);
+    };
+  }, []);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(
     null
   );
@@ -94,11 +122,28 @@ export default function ArcheryGame() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setWukongEntered(true);
-      setShowQuestion(true);
-      setZoomIn(true);
-      setShowSmoke(true); // this one adds smoke
-      setTimeout(() => setShowSmoke(false), 1000);
+      setShowVS(true); // Hiển thị VS
+
+      setTimeout(() => {
+        setShowVS(false); // Ẩn VS sau 2 giây
+
+        // Thêm delay 0.5s sau khi ẩn VS rồi mới hiện khói
+        setTimeout(() => {
+          setShowSmoke(true);
+
+          setTimeout(() => {
+            setShowSmoke(false); // Ẩn khói sau 1 giây
+            setShowVS(false);
+            // Thêm delay 0.5s sau khi ẩn khói rồi mới hiện câu hỏi
+            setTimeout(() => {
+              setShowQuestion(true);
+              setZoomIn(true);
+            }, 500);
+          }, 1000);
+        }, 500);
+      }, 800);
     }, 5000);
+
     return () => clearTimeout(timer);
   }, [currentQuestionIndex]);
 
@@ -284,6 +329,28 @@ export default function ArcheryGame() {
           />
         </div>
       )}
+      {showVS && (
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{
+            scale: [0, 1.5, 1.5], // Scale lên 1.5 và giữ nguyên
+            opacity: [0, 1, 1], // Opacity lên 1 và giữ nguyên
+          }}
+          transition={{
+            duration: 1, // Tổng thời gian animation là 2 giây
+            times: [0, 0.3, 1], // 30% đầu để scale/opacity lên, 70% còn lại giữ nguyên
+          }}
+          className="relative top-1/2 left-1/2 mt-[-100px] transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[300px] z-50 pointer-events-none"
+        >
+          <Image
+            src="/images/vs.jpg"
+            alt="VS"
+            width={700}
+            height={600}
+            className="object-contain"
+          />
+        </motion.div>
+      )}
 
       {/* Wukong flying in */}
       {!wukongEntered && !result && (
@@ -317,19 +384,21 @@ export default function ArcheryGame() {
       {bossVisible && (!wukongEntered || result === "wrong") && (
         <motion.div
           initial={{
-            x: result === "wrong" ? -600 : 0, // Bắt đầu từ bên trái
-            y: 0,
+            x: result === "wrong" ? -600 : 0, // Bắt đầu từ bên trái khi sai
+            scale: 1,
             opacity: 1,
           }}
           animate={{
-            x: result === "wrong" ? 400 : 0, // Di chuyển thẳng qua phải
-            opacity: result === "wrong" ? 0 : 1, // Mờ dần khi di chuyển xong
+            x: result === "wrong" ? 400 : 0, // Bay sang phải khi sai
+            scale: result === "wrong" ? 0.2 : 1, // Zoom out khi sai
+            opacity: result === "wrong" ? 0 : 1, // Mờ dần khi sai
           }}
           transition={{
-            x: { duration: 2, ease: "easeInOut" }, // Di chuyển mượt trong 2 giây
-            opacity: { duration: 1, ease: "easeInOut", delay: 2 }, // Mờ dần sau khi di chuyển xong
+            x: { duration: 2, ease: "easeInOut" },
+            scale: { duration: 2, ease: "easeInOut" },
+            opacity: { duration: 1, ease: "easeInOut", delay: 2 },
           }}
-          className="absolute right-20 top-1/2 transform -translate-y-1/2 w-[420px] h-[420px]"
+          className="absolute right-20 top-1/2 transform -translate-y-1/2 w-[320px] h-[320px]"
         >
           {/* Boss image */}
           <Image
@@ -339,8 +408,8 @@ export default function ArcheryGame() {
             className="object-contain z-50"
           />
 
-          {/* Sky always */}
-          <div className="absolute right-[-50px] top-[320px] transform -translate-y-1/2 w-[450px] h-[450px] z-10">
+          {/* Sky luôn xuất hiện */}
+          <div className="absolute right-[-50px] z-50 top-[270px] transform -translate-y-1/2 w-[450px] h-[450px] ">
             <Image
               src="/images/sky.png"
               alt="Sky"
@@ -360,7 +429,7 @@ export default function ArcheryGame() {
               />
               <Image
                 src="/images/sky.png"
-                alt="Shifu"
+                alt="Shifu Sky"
                 fill
                 className="object-contain transform scale-x-[-1] ml-[-100px] mb-[-120px]"
               />
@@ -409,8 +478,17 @@ export default function ArcheryGame() {
           <motion.div
             key={`attack-${selected}`}
             initial={{ x: 200, y: 100, opacity: 1 }}
-            animate={{ x: 600, y: 100, rotate: 360, opacity: 1 }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
+            animate={{
+              x: 600,
+              y: 100,
+              rotate: 360,
+              opacity: [1, 1, 0], // giữ opacity 1 một lúc rồi giảm dần về 0
+            }}
+            transition={{
+              duration: 1, // tổng thời gian
+              ease: "easeOut",
+              times: [0, 0.75, 1], // 75% thời gian đầu opacity=1, 25% còn lại opacity giảm xuống 0
+            }}
             className="absolute w-[300px] h-[300px] left-0 top-0 z-30"
           >
             <Image
@@ -430,7 +508,7 @@ export default function ArcheryGame() {
               y: result === "correct" ? 100 : 0,
             }}
             transition={{ delay: 1.5, duration: 1 }}
-            className="absolute w-[400px] h-[400px] left-[600px] top-[100px] z-10"
+            className="absolute w-[320px] h-[320px] left-[600px] top-[100px] z-10"
           >
             <Image
               src="/images/boss.png"
@@ -438,7 +516,7 @@ export default function ArcheryGame() {
               fill
               className="object-contain"
             />
-            <div className="absolute right-[-50px] top-[320px] transform -translate-y-1/2 w-[450px] h-[450px] z-10">
+            <div className="absolute right-[-50px] top-[270px] z-50 transform -translate-y-1/2 w-[450px] h-[450px] ">
               <Image
                 src="/images/sky.png"
                 alt="Sky"
@@ -451,7 +529,7 @@ export default function ArcheryGame() {
           {/* Wukong image */}
           <motion.div
             initial={{ opacity: 1 }}
-            animate={{ x: 700, y: 0, rotate: 10, opacity: 1 }}
+            animate={{ x: 800, y: 0, rotate: 10, opacity: 1 }}
             transition={{ delay: 2.1, duration: 1.0 }}
             className="absolute w-[350px] h-[350px] left-[100px] top-[100px] z-20"
           >
@@ -500,16 +578,59 @@ export default function ArcheryGame() {
       )}
 
       {/* Lives */}
-      <div className="absolute top-4 left-4 text-lg font-bold text-red-600">
-        ❤️ {lives}
-      </div>
+      <div className="absolute top-4 right-4 flex gap-2">
+        <button
+          onClick={() => {
+            if (isBackgroundPlaying) {
+              backgroundSoundRef.current?.pause();
+            } else {
+              backgroundSoundRef.current?.play();
+            }
+            setIsBackgroundPlaying(!isBackgroundPlaying);
+          }}
+          className="p-2 bg-white rounded-full shadow-md"
+        >
+          {isBackgroundPlaying ? (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="6" y="4" width="4" height="16"></rect>
+              <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            </svg>
+          )}
+        </button>
 
+        <div className="text-lg font-bold text-red-600">❤️ {lives}</div>
+      </div>
       {/* Question box */}
       {showQuestion && currentQuestion && !gameOver && (
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={zoomIn ? { scale: 1, opacity: 1 } : {}}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.6, delay: 0.8 }} // 👈 Thêm delay ở đây
           className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white rounded-xl shadow-lg p-6 w-[90%] h-[90%] max-w-4xl flex flex-col justify-start items-center"
         >
           <h2 className="text-2xl font-extrabold text-green-700 mb-6 text-center">

@@ -1,14 +1,61 @@
 "use client";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { JSX, useEffect, useState } from "react";
 import ArcheryGame from "./components/ArcheryGame";
+import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
+
+// Define a type for our games
+type Game = {
+  id: string;
+  title: string;
+  description: string;
+  component: JSX.Element;
+  image: string;
+};
 
 export default function Home() {
   const [isOpen, setIsOpen] = useState(false);
   const [isOpenTopic, setIsOpenTopic] = useState(false);
   const [selectedContent, setSelectedContent] = useState<
-    "home" | "game" | "vocab"
+    "home" | "game" | "vocab" | null
   >("home");
+  const [selectedGame, setSelectedGame] = useState<string | null>(null);
+
+  const { data: session } = useSession();
+
+  // List of available games
+  const games: Game[] = [
+    {
+      id: "archery",
+      title: "Bé Phiêu Lưu Ký",
+      description: "Trò chơi bắn cung giúp học từ vựng",
+      component: <ArcheryGame />,
+      image: "/images/game1.png",
+    },
+    {
+      id: "memory",
+      title: "Trò Chơi Trí Nhớ",
+      description: "Lật thẻ và tìm cặp từ vựng phù hợp",
+      component: (
+        <div className="text-center mt-10 text-2xl font-bold text-purple-600">
+          🎮 Trò Chơi Trí Nhớ (Coming Soon)
+        </div>
+      ),
+      image: "/images/memory_thumb.jpg",
+    },
+    {
+      id: "quiz",
+      title: "Đố Vui Học Tập",
+      description: "Trả lời câu hỏi nhanh để ghi điểm",
+      component: (
+        <div className="text-center mt-10 text-2xl font-bold text-orange-600">
+          ❓ Đố Vui Học Tập (Coming Soon)
+        </div>
+      ),
+      image: "/images/quiz_thumb.jpg",
+    },
+  ];
 
   const handleOpenTopic = () => {
     setIsOpenTopic(!isOpenTopic);
@@ -16,6 +63,12 @@ export default function Home() {
   const handleOpen = () => {
     setIsOpen(!isOpen);
   };
+
+  const handleGameSelect = (gameId: string) => {
+    setSelectedContent("game");
+    setSelectedGame(gameId);
+  };
+
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       if (e.ctrlKey) {
@@ -29,12 +82,12 @@ export default function Home() {
       window.removeEventListener("wheel", handleWheel);
     };
   }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-blue-50 text-gray-800">
       {/* Top Navbar */}
       <header className="flex justify-between items-center bg-white px-6 py-4 shadow">
         <button className="hover:bg-gray-200 rounded-xl" onClick={handleOpen}>
-          {" "}
           <svg
             className="w-10 h-10 "
             aria-hidden="true"
@@ -52,10 +105,21 @@ export default function Home() {
             />
           </svg>
         </button>
-        <nav className="space-x-4 hidden md:flex">
-          <a href="#" className="hover:text-blue-600">
-            Sơ đồ
-          </a>
+        <nav className="space-x-4 hidden md:flex items-center">
+          {session ? (
+            <>
+              <span className="text-blue-600">
+                Xin chào, {session.user?.name}
+              </span>
+              <button onClick={() => signOut()} className="hover:text-blue-600">
+                Đăng xuất
+              </button>
+            </>
+          ) : (
+            <Link className="hover:text-blue-600" href={"/login"}>
+              Đăng Nhập
+            </Link>
+          )}
           <a href="#" className="hover:text-blue-600">
             Nổi bật
           </a>
@@ -70,7 +134,10 @@ export default function Home() {
         {isOpen && (
           <aside className="w-64 bg-white p-6 border-r hidden md:block">
             <button
-              onClick={() => setSelectedContent("home")}
+              onClick={() => {
+                setSelectedContent("home");
+                setSelectedGame(null);
+              }}
               className="hover:text-blue-500 flex items-center"
             >
               <h2 className="text-lg font-semibold mb-4 flex">Home</h2>
@@ -78,7 +145,6 @@ export default function Home() {
             <h2 className="text-lg font-semibold mb-4 flex">
               Bài Học{" "}
               <button onClick={handleOpenTopic}>
-                {" "}
                 <svg
                   className="w-6 h-6 text-gray-800 ml-[20px] cursor-pointer"
                   aria-hidden="true"
@@ -110,7 +176,10 @@ export default function Home() {
                         <ul className="ml-4 mt-1 space-y-1 text-sm text-gray-700">
                           <li>
                             <button
-                              onClick={() => setSelectedContent("game")}
+                              onClick={() => {
+                                setSelectedContent("game");
+                                setSelectedGame(null);
+                              }}
                               className="hover:text-blue-500 flex items-center"
                             >
                               🧩 <span className="ml-1">Trò chơi</span>
@@ -137,7 +206,17 @@ export default function Home() {
         <main className="flex-1 p-8">
           {selectedContent === "home" && (
             <>
-              <div className="text-center  ">
+              {session && (
+                <div className="mb-6 p-4 bg-blue-100 rounded-lg">
+                  <h2 className="text-xl font-bold text-blue-800">
+                    Xin chào, {session.user?.name}!
+                  </h2>
+                  <p className="text-blue-600">
+                    Bạn đã đăng nhập với email: {session.user?.email}
+                  </p>
+                </div>
+              )}
+              <div className="text-center">
                 <Image
                   src="/images/bg_cutepanda.jpg"
                   alt="Cute Panda"
@@ -148,9 +227,49 @@ export default function Home() {
               </div>
             </>
           )}
-          {selectedContent === "game" && (
+
+          {selectedContent === "game" && !selectedGame && (
             <div className="mt-10">
-              <ArcheryGame />
+              <h2 className="text-2xl font-bold text-center mb-8 text-blue-700">
+                Chọn Trò Chơi
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {games.map((game) => (
+                  <div
+                    key={game.id}
+                    className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer"
+                    onClick={() => handleGameSelect(game.id)}
+                  >
+                    <div className="w-full h-48 jusity-items-center relative">
+                      <Image
+                        src={game.image}
+                        alt={game.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="text-xl font-bold mb-2">{game.title}</h3>
+                      <p className="text-gray-600">{game.description}</p>
+                      <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
+                        Chơi Ngay
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {selectedContent === "game" && selectedGame && (
+            <div className="mt-10">
+              {games.find((g) => g.id === selectedGame)?.component}
+              <button
+                onClick={() => setSelectedGame(null)}
+                className="mt-6 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition"
+              >
+                ← Quay lại danh sách trò chơi
+              </button>
             </div>
           )}
 
