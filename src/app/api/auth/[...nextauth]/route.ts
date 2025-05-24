@@ -2,7 +2,7 @@ import NextAuth, { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { connectDB } from "@/app/lib/db";
 import bcrypt from "bcrypt";
-import User from "@/app/models/User";
+import UserModel from "@/app/models/User"; // ✅ Đổi tên import để tránh xung đột
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -19,7 +19,9 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email and password are required");
         }
 
-        const user = await User.findOne({ email: credentials.email });
+        const user = await UserModel.findOne({
+          email: credentials.email,
+        }).select("+password"); // Thêm nếu cần
 
         if (!user) {
           throw new Error("User not found");
@@ -41,11 +43,7 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-
-  session: {
-    strategy: "jwt",
-  },
-
+  session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -58,19 +56,16 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         (session.user as { id: string }).id = token.id as string;
-
         session.user.name = token.name;
         session.user.email = token.email;
       }
       return session;
     },
   },
-
   pages: {
     signIn: "/login",
     error: "/login",
   },
-
   secret: process.env.NEXTAUTH_SECRET,
 };
 
