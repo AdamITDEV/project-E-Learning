@@ -47,30 +47,50 @@ export default function ArcheryGame() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showVS, setShowVS] = useState(false);
   const backgroundSoundRef = useRef<HTMLAudioElement | null>(null);
-  const [isBackgroundPlaying, setIsBackgroundPlaying] = useState(false);
+  const [isBackgroundPlaying, setIsBackgroundPlaying] = useState(true);
 
   // Thêm useEffect để khởi tạo và phát nhạc nền
+  // Thay đổi useEffect xử lý âm thanh nền
   useEffect(() => {
     // Khởi tạo audio
     backgroundSoundRef.current = new Audio("/audio/tayduky.mp3");
-    backgroundSoundRef.current.loop = true; // Lặp lại nhạc nền
+    backgroundSoundRef.current.loop = true;
 
-    // Tự động phát nhạc (cần xử lý trình duyệt chặn autoplay)
-    const handlePlay = () => {
-      backgroundSoundRef.current
-        ?.play()
-        .then(() => setIsBackgroundPlaying(true))
-        .catch((e) => console.error("Lỗi phát nhạc nền:", e));
+    // Thêm sự kiện loadedmetadata để xử lý autoplay
+    backgroundSoundRef.current.addEventListener("loadedmetadata", () => {
+      // Thử phát ngay lập tức
+      const playPromise = backgroundSoundRef.current?.play().catch(() => {
+        console.log("Autoplay bị chặn, cần tương tác người dùng");
+      });
+
+      // Nếu autoplay bị chặn, thêm nút play thủ công
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Hiển thị nút play nếu cần
+          setIsBackgroundPlaying(false);
+        });
+      } else {
+        setIsBackgroundPlaying(true);
+      }
+    });
+
+    // Xử lý khi người dùng tương tác lần đầu
+    const handleFirstInteraction = () => {
+      if (!isBackgroundPlaying) {
+        backgroundSoundRef.current
+          ?.play()
+          .then(() => setIsBackgroundPlaying(true))
+          .catch((e) => console.error("Lỗi phát nhạc nền:", e));
+      }
+      document.removeEventListener("click", handleFirstInteraction);
     };
 
-    // Thêm sự kiện click để kích hoạt audio (vì nhiều trình duyệt chặn autoplay)
-    document.addEventListener("click", handlePlay, { once: true });
+    document.addEventListener("click", handleFirstInteraction);
 
-    // Dọn dẹp
     return () => {
       backgroundSoundRef.current?.pause();
       backgroundSoundRef.current = null;
-      document.removeEventListener("click", handlePlay);
+      document.removeEventListener("click", handleFirstInteraction);
     };
   }, []);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(
@@ -85,8 +105,8 @@ export default function ArcheryGame() {
       currentAudio.currentTime = 0;
     }
 
-    // Dừng nhạc nền
-    if (backgroundSoundRef.current && isBackgroundPlaying) {
+    // Dừng nhạc nền nếu đang phát
+    if (backgroundSoundRef.current && !backgroundSoundRef.current.paused) {
       backgroundSoundRef.current.pause();
       setIsBackgroundPlaying(false);
     }
@@ -95,29 +115,56 @@ export default function ArcheryGame() {
     const audio = new Audio(currentQuestion.audio);
     setCurrentAudio(audio);
 
-    audio
-      .play()
-      .then(() => setIsPlaying(true))
-      .catch((error) => console.error("Error playing audio:", error));
+    // Xử lý khi audio bắt đầu phát
+    audio.onplay = () => {
+      setIsPlaying(true);
+    };
 
+    // Xử lý khi audio kết thúc
     audio.onended = () => {
       setIsPlaying(false);
-      // Bật lại nhạc nền khi audio kết thúc
-      if (backgroundSoundRef.current && !isBackgroundPlaying) {
+      // Phát lại nhạc nền
+      if (backgroundSoundRef.current) {
         backgroundSoundRef.current
           .play()
           .then(() => setIsBackgroundPlaying(true))
           .catch((e) => console.error("Lỗi phát nhạc nền:", e));
       }
     };
+
+    // Xử lý lỗi phát audio
+    audio.onerror = () => {
+      setIsPlaying(false);
+      console.error("Lỗi phát audio câu hỏi");
+      // Phát lại nhạc nền nếu có lỗi
+      if (backgroundSoundRef.current) {
+        backgroundSoundRef.current
+          .play()
+          .then(() => setIsBackgroundPlaying(true))
+          .catch((e) => console.error("Lỗi phát nhạc nền:", e));
+      }
+    };
+
+    // Bắt đầu phát audio câu hỏi
+    audio.play().catch((error) => {
+      console.error("Error playing audio:", error);
+      setIsPlaying(false);
+      // Phát lại nhạc nền nếu không phát được audio câu hỏi
+      if (backgroundSoundRef.current) {
+        backgroundSoundRef.current
+          .play()
+          .then(() => setIsBackgroundPlaying(true))
+          .catch((e) => console.error("Lỗi phát nhạc nền:", e));
+      }
+    });
   };
 
   const handlePauseAudio = () => {
     if (currentAudio) {
       currentAudio.pause();
       setIsPlaying(false);
-      // Bật lại nhạc nền khi tạm dừng audio câu hỏi
-      if (backgroundSoundRef.current && !isBackgroundPlaying) {
+      // Phát lại nhạc nền khi tạm dừng audio câu hỏi
+      if (backgroundSoundRef.current) {
         backgroundSoundRef.current
           .play()
           .then(() => setIsBackgroundPlaying(true))
@@ -288,18 +335,23 @@ export default function ArcheryGame() {
     setResult(isCorrect ? "correct" : "wrong");
     setShowQuestion(false);
 
+    // Dừng nhạc nền trước khi phát âm thanh kết quả
+    if (backgroundSoundRef.current && !backgroundSoundRef.current.paused) {
+      backgroundSoundRef.current.pause();
+      setIsBackgroundPlaying(false);
+    }
+
     // Phát âm thanh tương ứng
     if (isCorrect) {
       correctSoundRef.current
         ?.play()
         .catch((e) => console.error("Error playing correct sound:", e));
 
-      // Thêm delay để âm thanh attack phát cùng lúc với hiệu ứng
       setTimeout(() => {
         attackSoundRef.current
           ?.play()
           .catch((e) => console.error("Error playing attack sound:", e));
-      }, 500); // Delay 0.5s để đồng bộ với animation
+      }, 500);
     } else {
       wrongSoundRef.current
         ?.play()
@@ -310,28 +362,41 @@ export default function ArcheryGame() {
       setLives((prev) => prev - 1);
     }
 
-    setTimeout(() => {
-      // Chỉ hiện complete_attack nếu đúng
-      if (isCorrect) {
+    // Tự động phát lại nhạc nền sau khi âm thanh kết quả kết thúc
+    const playBackgroundAfterResult = () => {
+      if (backgroundSoundRef.current) {
+        backgroundSoundRef.current
+          .play()
+          .then(() => setIsBackgroundPlaying(true))
+          .catch((e) => console.error("Lỗi phát nhạc nền:", e));
+      }
+    };
+
+    // Tăng thời gian hiển thị kết quả lên 3 giây (từ 2 giây)
+    setTimeout(playBackgroundAfterResult, 3000);
+
+    // Hiệu ứng tấn công nếu đúng
+    if (isCorrect) {
+      setTimeout(() => {
         setShowCompleteAttack(true);
         setTimeout(() => {
           setShowCompleteAttack(false);
-        }, 1000);
+        }, 1500); // Tăng thời gian hiển thị hiệu ứng tấn công
+      }, 800);
+    }
+
+    // Chuyển câu hỏi tiếp theo hoặc kết thúc game
+    setTimeout(() => {
+      if (currentQuestionIndex < questions.length - 1) {
+        setCurrentQuestionIndex((prev) => prev + 1);
+        resetQuestion();
+        setBossVisible(true);
+      } else {
+        setWon(true);
+        setGameOver(true);
       }
-
-      setTimeout(() => {
-        if (currentQuestionIndex < questions.length - 1) {
-          setCurrentQuestionIndex((prev) => prev + 1);
-          resetQuestion();
-          setBossVisible(true);
-        } else {
-          setWon(true);
-          setGameOver(true);
-        }
-      }, 2700);
-    }, 800);
+    }, 4000); // Tăng từ 2.7 giây lên 4 giây
   };
-
   return (
     <div
       className="relative w-full h-[550px] bg-cover bg-center rounded-xl p-6 overflow-hidden"
@@ -601,14 +666,25 @@ export default function ArcheryGame() {
       <div className="absolute top-4 right-4 flex gap-2">
         <button
           onClick={() => {
+            // Nếu đang phát audio câu hỏi thì không cho phép bật nhạc nền
+            if (isPlaying) return;
+
             if (isBackgroundPlaying) {
               backgroundSoundRef.current?.pause();
+              setIsBackgroundPlaying(false);
             } else {
-              backgroundSoundRef.current?.play();
+              backgroundSoundRef.current
+                ?.play()
+                .then(() => setIsBackgroundPlaying(true))
+                .catch((e) => console.error("Lỗi phát nhạc nền:", e));
             }
-            setIsBackgroundPlaying(!isBackgroundPlaying);
           }}
-          className="p-2 bg-white rounded-full shadow-md z-50"
+          className={clsx("p-2 rounded-full shadow-md z-50", {
+            "bg-white text-gray-800": isBackgroundPlaying,
+            "bg-gray-300 text-gray-600": !isBackgroundPlaying,
+            "cursor-not-allowed opacity-50": isPlaying, // Vô hiệu hóa khi đang phát audio câu hỏi
+          })}
+          disabled={isPlaying} // Vô hiệu hóa nút khi đang phát audio câu hỏi
         >
           {isBackgroundPlaying ? (
             <svg
@@ -673,6 +749,16 @@ export default function ArcheryGame() {
 
           {currentQuestion.audio && (
             <div className="mb-6 flex items-center justify-center gap-4">
+              {/* Trong phần render */}
+              {isPlaying && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="absolute top-20 right-4 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium z-50"
+                >
+                  Đang phát câu hỏi...
+                </motion.div>
+              )}
               {!isPlaying ? (
                 <button
                   onClick={handlePlayAudio}
