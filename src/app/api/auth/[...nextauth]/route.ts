@@ -1,10 +1,10 @@
-import NextAuth, { type NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { connectDB } from "@/app/lib/db";
 import bcrypt from "bcrypt";
-import UserModel from "@/app/models/User"; // ✅ Đổi tên import để tránh xung đột
+import UserModel from "@/app/models/User"; // Đổi tên để tránh xung đột
 
-export const authOptions: NextAuthOptions = {
+const handler = NextAuth({
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -21,7 +21,7 @@ export const authOptions: NextAuthOptions = {
 
         const user = await UserModel.findOne({
           email: credentials.email,
-        }).select("+password"); // Thêm nếu cần
+        }).select("+password");
 
         if (!user) {
           throw new Error("User not found");
@@ -43,7 +43,9 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -67,7 +69,6 @@ export const authOptions: NextAuthOptions = {
     error: "/login",
   },
   secret: process.env.NEXTAUTH_SECRET,
-};
+});
 
-const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
