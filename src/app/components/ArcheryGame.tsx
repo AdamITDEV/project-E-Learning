@@ -360,6 +360,11 @@ export default function ArcheryGame() {
         ?.play()
         .catch((e) => console.error("Error playing smile sound:", e));
       setLives((prev) => prev - 1);
+
+      // Thêm timeout để ẩn cây trúc sau khi bay xong
+      setTimeout(() => {
+        setResult(null); // Reset result để ẩn animation cây trúc
+      }, 1500); // Thời gian này phải khớp với duration animation
     }
 
     // Tự động phát lại nhạc nền sau khi âm thanh kết quả kết thúc
