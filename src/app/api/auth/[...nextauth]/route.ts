@@ -1,8 +1,8 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { connectDB } from "@/app/lib/db";
 import bcrypt from "bcrypt";
-import UserModel from "@/app/models/User"; // Đổi tên để tránh xung đột
+import { connectDB } from "@/app/lib/db";
+import User from "@/app/models/User";
 
 const handler = NextAuth({
   providers: [
@@ -15,60 +15,52 @@ const handler = NextAuth({
       async authorize(credentials) {
         await connectDB();
 
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and password are required");
-        }
-
-        const user = await UserModel.findOne({
-          email: credentials.email,
-        }).select("+password");
-
-        if (!user) {
-          throw new Error("User not found");
-        }
+        const user = await User.findOne({ email: credentials?.email }).select(
+          "+password"
+        );
+        if (!user) throw new Error("Invalid email or password");
 
         const isValid = await bcrypt.compare(
-          credentials.password,
+          credentials!.password!,
           user.password
         );
-        if (!isValid) {
-          throw new Error("Invalid password");
-        }
+        if (!isValid) throw new Error("Invalid email or password");
 
+        // Return an object matching your custom User type
         return {
           id: user._id.toString(),
-          name: user.username,
           email: user.email,
+          name: user.username, // NextAuth expects 'name'
+          username: user.username, // Your custom User type expects 'username'
         };
       },
     }),
   ],
-  session: {
-    strategy: "jwt",
+  pages: {
+    signIn: "/login",
+    error: "/login",
   },
+  session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.name = user.name;
-        token.email = user.email;
+        token.email = user.email ?? "";
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        (session.user as { id: string }).id = token.id as string;
-        session.user.name = token.name;
-        session.user.email = token.email;
+      if (token) {
+        session.user.id = token.id as string;
+        session.user.name = token.name as string;
+        session.user.email = token.email as string;
       }
       return session;
     },
   },
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
 });
 
 export { handler as GET, handler as POST };
