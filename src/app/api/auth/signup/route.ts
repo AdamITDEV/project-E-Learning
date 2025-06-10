@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
 
-    const { username, email, password } = await req.json();
+    const { username, email, password, isTeacher } = await req.json();
 
     if (!username || !email || !password) {
       return NextResponse.json({ message: "Missing fields" }, { status: 400 });
@@ -22,7 +22,13 @@ export async function POST(req: NextRequest) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, email, password: hashedPassword });
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
+      isTeacher: !!isTeacher, // ép kiểu Boolean
+    });
+
     await newUser.save();
 
     return NextResponse.json({ message: "User created" }, { status: 201 });

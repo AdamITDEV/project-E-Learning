@@ -120,6 +120,10 @@ export default function Home() {
               Đăng Nhập
             </Link>
           )}
+          <Link href="/submit" className="hover:text-blue-600">
+            Nộp Bài
+          </Link>
+
           <a href="#" className="hover:text-blue-600">
             Nổi bật
           </a>

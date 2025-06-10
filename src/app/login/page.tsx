@@ -173,6 +173,19 @@ const RegisterForm = ({
         className="w-full px-4 py-2 border rounded"
         required
       />
+
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          name="isTeacher"
+          id="isTeacher"
+          className="mr-2"
+        />
+        <label htmlFor="isTeacher" className="text-sm text-gray-700">
+          Tôi là giáo viên
+        </label>
+      </div>
+
       <button
         type="submit"
         className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600"

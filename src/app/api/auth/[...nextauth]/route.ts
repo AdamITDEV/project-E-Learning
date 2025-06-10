@@ -1,10 +1,19 @@
-import NextAuth from "next-auth";
+// src/app/api/auth/[...nextauth]/route.ts
+import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import { connectDB } from "@/app/lib/db";
 import User from "@/app/models/User";
 
-const handler = NextAuth({
+interface CustomUser {
+  id: string;
+  email: string;
+  name: string;
+  username: string;
+  isTeacher?: boolean;
+}
+
+export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -26,12 +35,12 @@ const handler = NextAuth({
         );
         if (!isValid) throw new Error("Invalid email or password");
 
-        // Return an object matching your custom User type
         return {
           id: user._id.toString(),
           email: user.email,
-          name: user.username, // NextAuth expects 'name'
-          username: user.username, // Your custom User type expects 'username'
+          name: user.username,
+          username: user.username,
+          isTeacher: user.isTeacher, // Quan trọng để truyền trong token
         };
       },
     }),
@@ -47,6 +56,7 @@ const handler = NextAuth({
         token.id = user.id;
         token.name = user.name;
         token.email = user.email ?? "";
+        token.isTeacher = (user as CustomUser).isTeacher;
       }
       return token;
     },
@@ -55,12 +65,15 @@ const handler = NextAuth({
         session.user.id = token.id as string;
         session.user.name = token.name as string;
         session.user.email = token.email as string;
+        session.user.isTeacher = token.isTeacher as boolean | undefined;
       }
       return session;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === "development",
-});
+};
 
+// Export NextAuth handler
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
