@@ -4,6 +4,9 @@ import { JSX, useEffect, useState } from "react";
 import ArcheryGame from "./components/ArcheryGame";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import MemoryGame1 from "./components/MemoryGame1";
+import MemoryGame2 from "./components/MemoryGame2";
+import ListeningGame from "./components/ListeningGame7";
 
 // Define a type for our games
 type Game = {
@@ -21,11 +24,14 @@ export default function Home() {
     "home" | "game" | "vocab" | null
   >("home");
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
+  const [selectedLessonIndex, setSelectedLessonIndex] = useState<number | null>(
+    null
+  );
 
   const { data: session } = useSession();
 
   // List of available games
-  const games: Game[] = [
+  const games1: Game[] = [
     {
       id: "archery",
       title: "Bé Phiêu Lưu Ký",
@@ -35,18 +41,14 @@ export default function Home() {
     },
     {
       id: "memory",
-      title: "Trò Chơi Trí Nhớ",
+      title: "Trò Chơi Lật Thẻ",
       description: "Lật thẻ và tìm cặp từ vựng phù hợp",
-      component: (
-        <div className="text-center mt-10 text-2xl font-bold text-purple-600">
-          🎮 Trò Chơi Trí Nhớ (Coming Soon)
-        </div>
-      ),
-      image: "/images/memory_thumb.jpg",
+      component: <MemoryGame1 />,
+      image: "/images/game2.png",
     },
     {
       id: "quiz",
-      title: "Đố Vui Học Tập",
+      title: "Bạn Nghe Được Gì",
       description: "Trả lời câu hỏi nhanh để ghi điểm",
       component: (
         <div className="text-center mt-10 text-2xl font-bold text-orange-600">
@@ -56,7 +58,205 @@ export default function Home() {
       image: "/images/quiz_thumb.jpg",
     },
   ];
-
+  const games2: Game[] = [
+    {
+      id: "1",
+      title: "Bé Phiêu Lưu Ký12",
+      description: "Trò chơi bắn cung giúp học từ vựng",
+      component: <ArcheryGame />,
+      image: "/images/game1.png",
+    },
+    {
+      id: "2",
+      title: "Trò Chơi Lật Thẻ123",
+      description: "Lật thẻ và tìm cặp từ vựng phù hợp",
+      component: <MemoryGame2 />,
+      image: "/images/bannergame2.jpg",
+    },
+    {
+      id: "3",
+      title: "Đố Vui Học Tập123",
+      description: "Trả lời câu hỏi nhanh để ghi điểm",
+      component: (
+        <div className="text-center mt-10 text-2xl font-bold text-orange-600">
+          ❓ Đố Vui Học Tập (Coming Soon)
+        </div>
+      ),
+      image: "/images/quiz_thumb.jpg",
+    },
+  ];
+  const games3: Game[] = [
+    {
+      id: "archery",
+      title: "Bé Phiêu Lưu Ký",
+      description: "Trò chơi bắn cung giúp học từ vựng",
+      component: <ArcheryGame />,
+      image: "/images/game1.png",
+    },
+    {
+      id: "memory",
+      title: "Trò Chơi Lật Thẻ",
+      description: "Lật thẻ và tìm cặp từ vựng phù hợp",
+      component: <MemoryGame1 />,
+      image: "/images/game2.png",
+    },
+    {
+      id: "quiz",
+      title: "Bạn Nghe Được Gì",
+      description: "Trả lời câu hỏi nhanh để ghi điểm",
+      component: (
+        <div className="text-center mt-10 text-2xl font-bold text-orange-600">
+          ❓ Đố Vui Học Tập (Coming Soon)
+        </div>
+      ),
+      image: "/images/quiz_thumb.jpg",
+    },
+  ];
+  const games4: Game[] = [
+    {
+      id: "1",
+      title: "Bé Phiêu Lưu Ký 2",
+      description: "Trò chơi bắn cung giúp học từ vựng",
+      component: <ArcheryGame />,
+      image: "/images/game1.png",
+    },
+    {
+      id: "2",
+      title: "Trò Chơi Lật Thẻ 2",
+      description: "Lật thẻ và tìm cặp từ vựng phù hợp",
+      component: <MemoryGame2 />,
+      image: "/images/bannergame2.jpg",
+    },
+    {
+      id: "3",
+      title: "Đố Vui Học Tập 2",
+      description: "Trả lời câu hỏi nhanh để ghi điểm",
+      component: (
+        <div className="text-center mt-10 text-2xl font-bold text-orange-600">
+          ❓ Đố Vui Học Tập (Coming Soon)
+        </div>
+      ),
+      image: "/images/quiz_thumb.jpg",
+    },
+  ];
+  const games5: Game[] = [
+    {
+      id: "archery",
+      title: "Bé Phiêu Lưu Ký",
+      description: "Trò chơi bắn cung giúp học từ vựng",
+      component: <ArcheryGame />,
+      image: "/images/game1.png",
+    },
+    {
+      id: "memory",
+      title: "Trò Chơi Lật Thẻ",
+      description: "Lật thẻ và tìm cặp từ vựng phù hợp",
+      component: <MemoryGame1 />,
+      image: "/images/game2.png",
+    },
+    {
+      id: "quiz",
+      title: "Bạn Nghe Được Gì",
+      description: "Trả lời câu hỏi nhanh để ghi điểm",
+      component: (
+        <div className="text-center mt-10 text-2xl font-bold text-orange-600">
+          ❓ Đố Vui Học Tập (Coming Soon)
+        </div>
+      ),
+      image: "/images/quiz_thumb.jpg",
+    },
+  ];
+  const games6: Game[] = [
+    {
+      id: "1",
+      title: "Bé Phiêu Lưu Ký12",
+      description: "Trò chơi bắn cung giúp học từ vựng",
+      component: <ArcheryGame />,
+      image: "/images/game1.png",
+    },
+    {
+      id: "2",
+      title: "Trò Chơi Lật Thẻ123",
+      description: "Lật thẻ và tìm cặp từ vựng phù hợp",
+      component: <MemoryGame2 />,
+      image: "/images/bannergame2.jpg",
+    },
+    {
+      id: "3",
+      title: "Đố Vui Học Tập123",
+      description: "Trả lời câu hỏi nhanh để ghi điểm",
+      component: (
+        <div className="text-center mt-10 text-2xl font-bold text-orange-600">
+          ❓ Đố Vui Học Tập (Coming Soon)
+        </div>
+      ),
+      image: "/images/quiz_thumb.jpg",
+    },
+  ];
+  const games7: Game[] = [
+    {
+      id: "archery",
+      title: "Bé Phiêu Lưu Ký 7",
+      description: "Trò chơi bắn cung giúp học từ vựng",
+      component: <ArcheryGame />,
+      image: "/images/game1.png",
+    },
+    {
+      id: "memory",
+      title: "Trò Chơi Lật Thẻ 7",
+      description: "Lật thẻ và tìm cặp từ vựng phù hợp",
+      component: <MemoryGame1 />,
+      image: "/images/game2.png",
+    },
+    {
+      id: "quiz",
+      title: "Bạn Nghe Được Gì 7",
+      description: "Trả lời câu hỏi nhanh để ghi điểm",
+      component: <ListeningGame />,
+      image: "/images/bannergame3.jpg",
+    },
+  ];
+  const games8: Game[] = [
+    {
+      id: "1",
+      title: "Bé Phiêu Lưu Ký12",
+      description: "Trò chơi bắn cung giúp học từ vựng",
+      component: <ArcheryGame />,
+      image: "/images/game1.png",
+    },
+    {
+      id: "2",
+      title: "Trò Chơi Lật Thẻ123",
+      description: "Lật thẻ và tìm cặp từ vựng phù hợp",
+      component: <MemoryGame2 />,
+      image: "/images/bannergame2.jpg",
+    },
+    {
+      id: "3",
+      title: "Đố Vui Học Tập123",
+      description: "Trả lời câu hỏi nhanh để ghi điểm",
+      component: (
+        <div className="text-center mt-10 text-2xl font-bold text-orange-600">
+          ❓ Đố Vui Học Tập (Coming Soon)
+        </div>
+      ),
+      image: "/images/bannergame3.jpg",
+    },
+  ];
+  const allGames = [
+    games1, // Bài 1
+    games2, // Bài 2
+    games3, // Bài 3
+    games4, // Bài 4
+    games5, // Bài 5
+    games6, // Bài 6
+    games7, // Bài 7
+    games8, // Bài 8
+  ];
+  const getCurrentGames = () => {
+    if (selectedLessonIndex === null) return [];
+    return allGames[selectedLessonIndex] || [];
+  };
   const handleOpenTopic = () => {
     setIsOpenTopic(!isOpenTopic);
   };
@@ -176,11 +376,61 @@ export default function Home() {
                       <summary className="cursor-pointer hover:text-blue-500">
                         Bài {idx + 1}
                       </summary>
+
                       {idx === 0 && (
                         <ul className="ml-4 mt-1 space-y-1 text-sm text-gray-700">
                           <li>
                             <button
                               onClick={() => {
+                                setSelectedLessonIndex(idx);
+                                setSelectedContent("game");
+                                setSelectedGame(null);
+                              }}
+                              className="hover:text-blue-500 flex items-center"
+                            >
+                              🧩 <span className="ml-1">Trò chơi</span>
+                            </button>
+                          </li>
+                          <li>
+                            <button
+                              onClick={() => setSelectedContent("vocab")}
+                              className="hover:text-blue-500 flex items-center"
+                            >
+                              📚 <span className="ml-1">Ôn tập từ vựng</span>
+                            </button>
+                          </li>
+                        </ul>
+                      )}
+                      {idx === 1 && (
+                        <ul className="ml-4 mt-1 space-y-1 text-sm text-gray-700">
+                          <li>
+                            <button
+                              onClick={() => {
+                                setSelectedLessonIndex(idx);
+                                setSelectedContent("game");
+                                setSelectedGame(null);
+                              }}
+                              className="hover:text-blue-500 flex items-center"
+                            >
+                              🧩 <span className="ml-1">Trò chơi</span>
+                            </button>
+                          </li>
+                          <li>
+                            <button
+                              onClick={() => setSelectedContent("vocab")}
+                              className="hover:text-blue-500 flex items-center"
+                            >
+                              📚 <span className="ml-1">Ôn tập từ vựng</span>
+                            </button>
+                          </li>
+                        </ul>
+                      )}
+                      {idx === 6 && (
+                        <ul className="ml-4 mt-1 space-y-1 text-sm text-gray-700">
+                          <li>
+                            <button
+                              onClick={() => {
+                                setSelectedLessonIndex(idx);
                                 setSelectedContent("game");
                                 setSelectedGame(null);
                               }}
@@ -235,16 +485,18 @@ export default function Home() {
           {selectedContent === "game" && !selectedGame && (
             <div className="mt-10">
               <h2 className="text-2xl font-bold text-center mb-8 text-blue-700">
-                Chọn Trò Chơi
+                {selectedLessonIndex !== null
+                  ? `Trò chơi Bài ${selectedLessonIndex + 1}`
+                  : "Chọn Trò Chơi"}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {games.map((game) => (
+                {getCurrentGames().map((game) => (
                   <div
                     key={game.id}
                     className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer"
                     onClick={() => handleGameSelect(game.id)}
                   >
-                    <div className="w-full h-48 jusity-items-center relative">
+                    <div className="w-full h-72 relative">
                       <Image
                         src={game.image}
                         alt={game.title}
@@ -267,7 +519,7 @@ export default function Home() {
 
           {selectedContent === "game" && selectedGame && (
             <div className="mt-10">
-              {games.find((g) => g.id === selectedGame)?.component}
+              {getCurrentGames().find((g) => g.id === selectedGame)?.component}
               <button
                 onClick={() => setSelectedGame(null)}
                 className="mt-6 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition"
