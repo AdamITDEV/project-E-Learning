@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
     content,
     deadline,
     teacherId: session.user.id,
+    createdBy: session.user.id,
   });
 
   return NextResponse.json({ message: "Task created", task: newTask });

@@ -3,39 +3,11 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import clsx from "clsx";
 import { motion } from "framer-motion";
-
-const questions = [
-  {
-    text: "1. Trong các nguyên âm dưới đây nguyên âm nào là nguyên âm đơn?",
-    options: ["i", "u", "ai", "e"],
-    correct: 2,
-  },
-  {
-    text: "2. Âm nào là nguyên âm?",
-    options: ["b", "m", "u", "p"],
-    correct: 2,
-  },
-  {
-    text: "3. Nhìn hình chọn đáp án đúng:",
-    options: ["mà", "bà", "pà", "fà"],
-    correct: 3,
-    image: "/images/hinhanhcau3bai1.jpg",
-  },
-  {
-    text: "4. Trong 4 âm / d / t / n / l / âm nào phát âm bật hơi ?",
-    options: ["n", "t", "l", "d"],
-    correct: 1,
-    audio: "audio/bai1cauhoi4.mp3",
-  },
-  {
-    text: "5. Nhìn hình chọn đáp án đúng :",
-    options: ["bà", "bá", "mà", "là"],
-    correct: 1,
-    image: "/images/hinhanhcau5bai1.jpg",
-  },
-];
+import { game1Questions } from "data/game/questions/game1";
 
 export default function ArcheryGame() {
+  const questions = game1Questions; // Giữ nguyên để sử dụng trong game1
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [result, setResult] = useState<"correct" | "wrong" | null>(null);
@@ -252,7 +224,9 @@ export default function ArcheryGame() {
   const [wukongEntered, setWukongEntered] = useState(false);
   const [bossVisible, setBossVisible] = useState(true);
 
-  const currentQuestion = !gameOver ? questions[currentQuestionIndex] : null;
+  const currentQuestion = !gameOver
+    ? game1Questions[currentQuestionIndex]
+    : null;
 
   useEffect(() => {
     const timer = setTimeout(() => {
